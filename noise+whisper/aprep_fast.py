@@ -53,7 +53,7 @@ async def speech_to_text(audio_buffer: Request):
     audio_bytes = await audio_buffer.body()
     audio_stream = BytesIO(audio_bytes)
     audio_ = np.frombuffer(audio_stream.read(), np.int16).flatten().astype(
-        np.float32) / 32768.0
+        np.float32)
     print(audio_)
     tcn_result = nr.wav_nr_buffer(audio_, tcn_model, gpu=GPU_, verbose=True)
     whisper_result = wx.asr_model_transcribe(
