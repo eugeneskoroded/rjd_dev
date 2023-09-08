@@ -75,7 +75,7 @@ def load_audio(file: (str, bytes), sr: int = 16000):
 
 def init_asr_model(model_name, device, language="ru", compute_type='float16', asr_opt=None):
     model = whisperx.load_model(whisper_arch=model_name, device=device, compute_type=compute_type,
-                                download_root='./models/', asr_options=asr_opt)
+                                download_root='./models/', asr_options=asr_opt, language=language)
     return model
 
 
