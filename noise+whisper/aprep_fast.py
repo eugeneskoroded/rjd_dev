@@ -11,6 +11,7 @@ import tts
 import re
 from num2words import num2words
 from transliterate import translit
+import json
 
 filterwarnings("ignore")
 # MICRO_TCN_PARAMS
@@ -100,6 +101,13 @@ async def audio_upload(file: UploadFile = File(...)):
         return {"filename": file.filename}
     else:
         return "sas"
+
+
+@app.post("/send_message")
+async def send_message(message: Request):
+    data = await message.json()
+    out_mess = {"answer": "Опять работа?"}
+    return out_mess
 
 
 @app.post("/speech_to_text")
