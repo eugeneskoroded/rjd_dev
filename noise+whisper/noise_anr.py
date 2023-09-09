@@ -235,7 +235,7 @@ def wav_nr_args(input_path, out_path, model_tcn, model_dfn, gpu=True, verbose=Tr
                              model_dfn, gpu=gpu, verbose=verbose)  # norm 0.1 0.5
 
 
-def tcn_dfn_process_buffer(audio, model_tcn,  sr=24000, limit=0.1, peak_red=0.5, gpu=False, verbose=True):
+def tcn_dfn_process_buffer(audio, model_tcn, dfn_model,  sr=24000, limit=0.1, peak_red=0.5, gpu=False, noise_filter=True, verbose=True):
     input = torch.from_numpy(audio).unsqueeze(0)
     input = input.float() / 32768  # 32768
     # check if the input is mono
@@ -272,13 +272,21 @@ def tcn_dfn_process_buffer(audio, model_tcn,  sr=24000, limit=0.1, peak_red=0.5,
         duration = input.size(-1)/sr
         print(
             f"Processed {duration:0.2f} sec in {elapsed:0.3f} sec => {duration/elapsed:0.1f}x real-time")
+    # perform noise filtering
+    if noise_filter:
+        model, df_state = dfn_model  # Load default model
+        resampled_48 = F.resample(out.cpu(), sr, 48000, lowpass_filter_width=6)
+        enhanced_audio = enhance(model, df_state, resampled_48)
+        resampled_16 = F.resample(
+            enhanced_audio, 48000, 16000, lowpass_filter_width=6)
+        return resampled_16.squeeze(0).detach().numpy()
+    else:
+        resampled = F.resample(out.cpu(), sr,
+                               16000, lowpass_filter_width=6)
 
-    resampled = F.resample(out.cpu(), sr,
-                           16000, lowpass_filter_width=6)
-
-    return resampled.squeeze(0).detach().numpy()
+        return resampled.squeeze(0).detach().numpy()
 
 
-def wav_nr_buffer(audio, model_tcn, gpu=True, verbose=True):
+def wav_nr_buffer(audio, model_tcn, dfn_model, gpu=True, verbose=True):
     # norm 0.1 0.5
-    return tcn_dfn_process_buffer(audio, model_tcn, gpu=gpu, verbose=verbose)
+    return tcn_dfn_process_buffer(audio, model_tcn, dfn_model, gpu=gpu, verbose=verbose)
