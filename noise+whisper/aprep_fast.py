@@ -1,7 +1,7 @@
 
 from warnings import filterwarnings
 from typing import Union
-from fastapi import FastAPI, Request, UploadFile, File
+from fastapi import FastAPI, Request, UploadFile, File, Response
 from fastapi.middleware.cors import CORSMiddleware
 import noise_anr as nr
 import whisperx_asr as wx
@@ -88,8 +88,14 @@ app.add_middleware(
 @app.post("/audio_load")
 async def audio_load(file: UploadFile = File(...)):
     contents = await file.read()
-    encoded_contents = base64.b64encode(contents).decode('utf-8')
-    return {"content": encoded_contents}
+    audio_ = wx.load_audio(contents)
+    audio_ = np.insert(audio_, 0, np.zeros(24000)).tobytes()
+    return Response(content=contents)
+# @app.post("/audio_load")
+# async def audio_load(file: UploadFile = File(...)):
+#     contents = await file.read()
+#     encoded_contents = base64.b64encode(contents).decode('utf-8')
+#     return {"content": encoded_contents}
 
 
 @app.post("/audio")
@@ -100,13 +106,18 @@ async def audio_upload(file: UploadFile = File(...)):
         print(audio_)
         return {"filename": file.filename}
     else:
-        return "sas"
+        return "ERROR: Request must contain audio file"
 
 
 @app.post("/send_message")
 async def send_message(message: Request):
     data = await message.json()
-    out_mess = {"answer": "Опять работа?"}
+    filename = "tts_dump.wav"
+    with open(filename, 'rb') as f:
+        file = f.read()
+    file = base64.b64encode(file).decode("utf-8")
+    print("[LOG]/send_message: ", data)
+    out_mess = {"answer": "Опять работа?", "tts_file": file}
     return out_mess
 
 
@@ -115,13 +126,15 @@ async def speech_to_text(file: UploadFile = File(...)):
     if file is not None:
         contents = await file.read()
         audio_ = wx.load_audio(contents)
+        if len(audio_) < 24000:
+            return "ОШИБКА! Отправьте новое голосовое сообщение"
         audio_ = np.insert(audio_, 0, np.zeros(24000))
         tcn_result = nr.wav_nr_buffer(
             audio_, tcn_model, dfn_model, gpu=GPU_, verbose=True)
         print(tcn_result)
         whisper_result = wx.asr_model_transcribe(
             asr_model=whisper_model_, audio_file=tcn_result)
-        print(whisper_result)
+        print("[LOG] /speech_to_text:", whisper_result)
         result = seg_comb(whisper_result)
         return result
     else:
