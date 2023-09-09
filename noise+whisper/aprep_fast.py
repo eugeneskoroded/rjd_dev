@@ -61,15 +61,15 @@ async def audio_load(file: UploadFile = File(...)):
     return {"content": encoded_contents}
 
 
-@app.post("/audio")
-async def audio_upload(file: UploadFile = File(...)):
-    if file is not None:
-        contents = await file.read()
-        audio_ = wx.load_audio(contents)
-        print(audio_)
-        return {"filename": file.filename}
-    else:
-        return "sas"
+# @app.post("/audio")
+# async def audio_upload(file: UploadFile = File(...)):
+#     if file is not None:
+#         contents = await file.read()
+#         audio_ = wx.load_audio(contents)
+#         print(audio_)
+#         return {"filename": file.filename}
+#     else:
+#         return "sas"
 
 
 @app.post("/speech_to_text")
