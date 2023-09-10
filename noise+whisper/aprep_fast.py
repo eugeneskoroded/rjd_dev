@@ -12,8 +12,9 @@ import re
 from num2words import num2words
 from transliterate import translit
 import json
-
+import requests
 filterwarnings("ignore")
+
 # MICRO_TCN_PARAMS
 MODEL_DIR_ = "./micro-tcn/"  # Location of models folder
 MODEL_ID_ = "9-uTCN-300__causal__4-10-13__fraction-0.1-bs32"  # Model_id
@@ -47,6 +48,9 @@ tts_model = tts.init_tts_model(
 # INIT DFN MODEL
 dfn_model = nr. init_dfn_model()
 # uvicorn aprep_fast:app --reload --host "0.0.0.0" --port 8081
+
+# db_server url
+db_server_url = 'http://localhost:8083/get_simmilar'
 
 # ADDITIONAL FUNCTIONS
 
@@ -112,12 +116,20 @@ async def audio_upload(file: UploadFile = File(...)):
 @app.post("/send_message")
 async def send_message(message: Request):
     data = await message.json()
+    print("[LOG]Message:", data["message"])
+    print("[LOG]document_id:", data["document_id"])
+    print("[LOG]ai:", data["ai"])
+    response = requests.get(db_server_url, json=data)
+    text_result = response.json()['text']
+    text_for_tts = string_conv(text_result)
+    tts_res = tts.apply_tts(tts_model, text_for_tts,
+                            sample_rate=SAMPLE_RATE, speaker=SPEAKER)
+
     filename = "tts_dump.wav"
     with open(filename, 'rb') as f:
         file = f.read()
     file = base64.b64encode(file).decode("utf-8")
-    print("[LOG]/send_message: ", data)
-    out_mess = {"answer": "Опять работа?", "tts_file": file}
+    out_mess = {"answer": text_result, "tts_file": file}
     return out_mess
 
 
