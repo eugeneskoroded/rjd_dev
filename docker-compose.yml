@@ -1,0 +1,46 @@
+version: '3'
+services:
+  gpt_server:
+    image: gpt-server
+    stdin_open: true
+    tty: true
+    runtime: nvidia # uncomment on server with GPU
+    command: gunicorn -w 1 --bind 0.0.0.0:8082 --timeout 3600 gpt_server:app
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=1
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONUNBUFFERED=1
+      - MODEL_NAME=IlyaGusev/saiga2_13b_lora
+      - BASE_MODEL_PATH=TheBloke/Llama-2-13B-fp16
+    volumes:
+      - /home/ubuntu/projects/volume:/user/volume
+  db_server:
+    image: db-server
+    stdin_open: true
+    tty: true
+    # runtime: nvidia # uncomment on server with GPU
+    command: gunicorn -w 1 --bind 0.0.0.0:8083 --timeout 3600 db_server:app
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=1
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONUNBUFFERED=0
+      - MODEL_NAME=sentence-transformers/paraphrase-multilingual-mpnet-base-v2
+    volumes:
+      - /home/ubuntu/projects/volume:/user/volume  
+  noise_whisper:
+    image: noise_whisper
+    runtime: nvidia # uncomment on server with GPU
+    command: uvicorn aprep_fast:app --reload --host "0.0.0.0" --port 8081
+    environment:
+      - NVIDIA_VISIBLE_DEVICES=0
+      - NVIDIA_DRIVER_CAPABILITIES=compute,utility
+      - PYTHONUNBUFFERED=1
+    ports:
+      - "0.0.0.0:8081:8081"
+  react_app:
+    image: react_app2
+    ports:
+      - "0.0.0.0:8080:8080"
+
+    
+
