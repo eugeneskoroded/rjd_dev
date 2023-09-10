@@ -1,0 +1,16 @@
+uvicorn
+transliterate
+num2words
+fastapi
+spacy
+torch
+torchaudio
+torchvision
+torch-summary
+pytorch-lightning==2.0.8
+ffmpeg-python
+requests-toolbelt
+deepfilternet==0.5.3
+git+https://github.com/m-bain/whisperx.git
+git+https://github.com/csteinmetz1/micro-tcn
+git+https://github.com/csteinmetz1/auraloss
